@@ -49,7 +49,11 @@ class UploadClient:
     def recv_until_delimiter(self, delimiter):
         while True:
             try:
-                self.recv(constants.MAX_BYTES)
+                byte_string = self.sock.recv(constants.MAX_BYTES)
+                if byte_string.find("\t") == "-1":
+                    pass
+            except:
+                raise UploadError("AAAAAAAA")
 
 
 if __name__ == '__main__':    
