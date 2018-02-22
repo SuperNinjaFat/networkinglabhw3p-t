@@ -50,8 +50,8 @@ class UploadClient:
         while True:
             try:
                 byte_string = self.sock.recv(constants.MAX_BYTES)
-                if byte_string.find("\t") == "-1":
-                    pass
+                if byte_string.find(delimiter) != -1:
+                    break
             except:
                 raise UploadError("AAAAAAAA")
 
