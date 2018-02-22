@@ -12,22 +12,30 @@ Prof. Joshua Auerbach (jauerbach@champlain.edu)
 import argparse
 import socket
 import os
-
+import constants
 
 class UploadError(Exception):
     """Error when uploading"""
     pass
 
-
 class UploadClient:
     # TODO document this class and implement the specified functions
     # create TCP socket here
 
+    def __init__(self, hostname, port):
+        self.hostname = hostname
+        self.port = port
 
-    def recv_all(self, sock, length):
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.connect((self.hostname, self.port))
+
+        print('Client has been assigned socket name', self.sock.getsockname())
+
+
+    def recv_all(self, length):
         data = b''
         while len(data) < length:
-            more = sock.recv(length - len(data))
+            more = self.sock.recv(length - len(data))
             if not more:
                 raise EOFError('was expecting %d bytes but only received'
                                ' %d bytes before the socket closed'
@@ -35,11 +43,19 @@ class UploadClient:
             data += more
         return data
 
+    def close(self):
+        self.sock.close()
 
-if __name__ == '__main__':
+    def recv_until_delimiter(self, delimiter):
+        while True:
+            try:
+                self.recv(constants.MAX_BYTES)
+
+
+if __name__ == '__main__':    
     parser = argparse.ArgumentParser(description='TCP File Uploader')
     parser.add_argument('host', help='interface the server listens at;'
-                                     ' host the client sends to')
+                        ' host the client sends to')
     parser.add_argument('-p', metavar='PORT', type=int, default=8900,
                         help='TCP port (default 8900)')
     args = parser.parse_args()
