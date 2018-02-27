@@ -47,11 +47,14 @@ class UploadClient:
         self.sock.close()
 
     def recv_until_delimiter(self, delimiter):
+        byte_string = ""
         while True:
             try:
-                byte_string = self.sock.recv(constants.MAX_BYTES)
-                if byte_string.find(delimiter) != -1:
-                    break
+                # .encode("ascii") (encode this mo-fo)
+                temp_byte_string = self.sock.recv(constants.MAX_BYTES).decode("ascii")
+                byte_string = "".join((byte_string, temp_byte_string))
+                if byte_string.find(delimiter.decode("ascii")) != -1:
+                    return byte_string[:byte_string.index(delimiter.decode("ascii"))].encode("ascii")
             except:
                 raise UploadError("AAAAAAAA")
 
