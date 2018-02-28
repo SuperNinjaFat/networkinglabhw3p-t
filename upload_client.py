@@ -48,18 +48,20 @@ class UploadClient:
 
     def recv_until_delimiter(self, delimiter):
         byte_string = ""
-        while True:
-            try:
-                # .encode("ascii") (encode this mo-fo)
+        if len(self.byte_string_list) != 0:
+            return self.byte_string_list.pop(0).encode("ascii")
+        else:
+            byte_string = self.sock.recv(constants.MAX_BYTES).decode("ascii")
+            while byte_string.find(delimiter.decode("ascii")) == -1:  # if delimiter is not included, then merge.
                 temp_byte_string = self.sock.recv(constants.MAX_BYTES).decode("ascii")
                 byte_string = "".join((byte_string, temp_byte_string))
-                if byte_string.find(delimiter.decode("ascii")) != -1:
-                    return byte_string[:byte_string.index(delimiter.decode("ascii"))].encode("ascii")
-            except:
-                raise UploadError("AAAAAAAA")
+            # Now that there is a delimiter, split up byte_string to a member variable
+            self.byte_string_list.extend(byte_string.split(delimiter.decode("ascii")))
+            # and return the first one in the list.
+        return self.byte_string_list.pop(0).encode("ascii")
 
 
-if __name__ == '__main__':    
+if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='TCP File Uploader')
     parser.add_argument('host', help='interface the server listens at;'
                         ' host the client sends to')
