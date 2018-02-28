@@ -28,7 +28,7 @@ class UploadClient:
 
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((self.hostname, self.port))
-
+        self.byte_string_buffer = ""
         print('Client has been assigned socket name', self.sock.getsockname())
 
 
@@ -48,17 +48,21 @@ class UploadClient:
 
     def recv_until_delimiter(self, delimiter):
         byte_string = ""
-        if len(self.byte_string_list) != 0:
-            return self.byte_string_list.pop(0).encode("ascii")
+        if len(self.byte_string_buffer) != 0:  # [len(delimiter):] == delimiter: # if the buffer doesn't end with a delimiter, put the new call
+            byte_string = self.byte_string_buffer + self.sock.recv(constants.MAX_BYTES).decode("ascii")
         else:
             byte_string = self.sock.recv(constants.MAX_BYTES).decode("ascii")
-            while byte_string.find(delimiter.decode("ascii")) == -1:  # if delimiter is not included, then merge.
-                temp_byte_string = self.sock.recv(constants.MAX_BYTES).decode("ascii")
-                byte_string = "".join((byte_string, temp_byte_string))
-            # Now that there is a delimiter, split up byte_string to a member variable
-            self.byte_string_list.extend(byte_string.split(delimiter.decode("ascii")))
+        while byte_string.find(delimiter.decode("ascii")) == -1:  # if delimiter is not included, then merge.
+            temp_byte_string = self.sock.recv(constants.MAX_BYTES).decode("ascii")
+            byte_string = "".join((byte_string, temp_byte_string))
+        # Now that there is a delimiter, either return the message that ends with a delimiter
+        if byte_string.encode("ascii").endswith(delimiter):
+            return byte_string.encode("ascii")[:byte_string.index(delimiter.decode("ascii"))]
+        else:  # or return everything up until the delimiter and then store the rest in a buffer
+            self.byte_string_buffer = byte_string[byte_string.index(delimiter.decode("ascii")):]
             # and return the first one in the list.
-        return self.byte_string_list.pop(0).encode("ascii")
+            return byte_string.encode("ascii")[:byte_string.index(delimiter.decode("ascii"))]
+
 
 
 if __name__ == '__main__':
