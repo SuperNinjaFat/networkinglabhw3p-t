@@ -49,19 +49,20 @@ class UploadClient:
     def recv_until_delimiter(self, delimiter):
         byte_string = ""
         if len(self.byte_string_buffer) != 0:  # [len(delimiter):] == delimiter: # if the buffer doesn't end with a delimiter, put the new call
-            byte_string = self.byte_string_buffer + self.sock.recv(constants.MAX_BYTES).decode("ascii")
+            byte_string = self.byte_string_buffer
+            self.byte_string_buffer = b""
         else:
-            byte_string = self.sock.recv(constants.MAX_BYTES).decode("ascii")
-        while byte_string.find(delimiter.decode("ascii")) == -1:  # if delimiter is not included, then merge.
-            temp_byte_string = self.sock.recv(constants.MAX_BYTES).decode("ascii")
-            byte_string = "".join((byte_string, temp_byte_string))
+            byte_string = self.sock.recv(constants.MAX_BYTES)
+        while byte_string.find(delimiter) == -1:  # if delimiter is not included, then merge.
+            temp_byte_string = self.sock.recv(constants.MAX_BYTES)
+            byte_string = b"".join((byte_string, temp_byte_string))
         # Now that there is a delimiter, either return the message that ends with a delimiter
-        if byte_string.encode("ascii").endswith(delimiter):
-            return byte_string.encode("ascii")[:byte_string.index(delimiter.decode("ascii"))]
+        if byte_string.endswith(delimiter):
+            return byte_string[:byte_string.index(delimiter)]
         else:  # or return everything up until the delimiter and then store the rest in a buffer
-            self.byte_string_buffer = byte_string[byte_string.index(delimiter.decode("ascii")):]
+            self.byte_string_buffer = byte_string[byte_string.index(delimiter)+1:]
             # and return the first one in the list.
-            return byte_string.encode("ascii")[:byte_string.index(delimiter.decode("ascii"))]
+            return byte_string[:byte_string.index(delimiter)]
 
 
 
